@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Stop the container
+sudo docker stop green_app
+# Remove the container
+sudo docker rm green_app
+# Pull the latest container from registry
+sudo docker pull localhost:5000/my_app:latest
+# Run it as blue deployment
+sudo docker run -p 8081:8080 -d --name green_app my_app
