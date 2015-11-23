@@ -10,10 +10,11 @@ Once you have an environment with docker set up, navigate to the fileio/ folder 
 ```
 cd output/ 
 docker build -t output .              # Build the output socat container
-cd ../curl_container
+cd ../curl_container                  # Navigate to the curl container
 docker build -t curl_container .      # Build the curl container
 docker run -d --name output output    # Run the output container in daemon mode
-docker run -i -t --link output:output_io curl_container curl output_io:9001    # Run curl command in the curl_container with the option linked to the output container
+docker run -i -t --link output:output_io curl_container curl output_io:9001    # Run a linked curl command
+
 ```
 
 ![FileIO demo](http://i.imgur.com/Orjagu7.gif)
