@@ -4,7 +4,7 @@
 To run this solution you need to have [Docker!](https://docs.docker.com/v1.8/installation/) installed. If you are unable to install Docker on your machine, there is Vagrant file included to run a ubuntu trusty64 virtual box where you can install docker with this command 
 - <code>curl -sSL https://get.docker.com/ | sh</code>
 
-Once you have an environment with docker set up, navigate to the fileio/ folder if you are not already inside the directory. Then follow these commands for the proper execution :
+Once you have an environment with docker set up, navigate to the <code>fileio/</code> folder if you are not already inside the directory. Then follow these commands for the proper execution :
 (Note: If using Vagrant and asked for a password, enter <code>vagrant</code> and you may have to use <code>sudo</code> to run your docker commands.)
 
 ```
@@ -21,7 +21,7 @@ docker run -i -t --link output:output_io curl_container curl output_io:9001    #
 
 ## Ambassador Pattern
 
-The ambassador pattern requires two VMs with docker and docker-compose installed on the VMs. Included inside the ambassador/ folder are two folders with Vagrant files that you can use to spin up VMs for this task. Simply navigate to each of the folders and run the following commands to setup the VMs: 
+The ambassador pattern requires two VMs with docker and docker-compose installed on the VMs. Included inside the <code>ambassador/</code> folder are two folders with Vagrant files that you can use to spin up VMs for this task. Simply navigate to each of the folders and run the following commands to setup the VMs: 
 ```
 vagrant up
 vagrant ssh
@@ -40,3 +40,84 @@ curl  192.168.33.11:8000/get/somekey
 ```
 
 ![Ambassador pattern demo](http://i.imgur.com/DKcn59M.gif)
+
+## Docker Deploy
+
+Inside the dockerdeploy folder is the code to deploy the simple web App to both a green and blue remote. Since docker isn't friendly on Mac OSX, a Vagrantfile is included to operate as the host machine. If Docker works fine on your machine you can go directly into the <code>code/</code> folder. 
+
+After docker and git are available on your host(or virtual) machine, you may continue.
+
+For setup the following commands were executed:
+- First a registry is established with
+```
+docker run -d -p 5000:5000 --restart=always --name registry registry:2
+```
+- Next the simple node app was cloned from git clone https://github.com/xprimus/App
+- In the same folder where <code>App/</code> is present, we initialize a blue and gree bare bones git repositories with the following commands
+```
+mkdir blue.git
+mkdir green.git
+cd blue.git
+git init --bare
+cd ../green.git
+git init --bare
+```
+- Inside blue.git/hooks/post-receive paste these contents
+```
+#!/bin/sh
+
+# Stop the container 
+sudo docker stop blue_app
+# Remove the container       
+sudo docker rm blue_app
+# Pull the latest container from registry
+sudo docker pull localhost:5000/my_app:latest
+# Run it as blue deployment  
+sudo docker run -p 8080:8080 -d --name blue_app my_app
+```
+
+- Inside green.git/hooks/post-receive paste these contents
+```
+#!/bin/sh
+
+# Stop the container 
+sudo docker stop gree_app
+# Remove the container       
+sudo docker rm green_app
+# Pull the latest container from registry
+sudo docker pull localhost:5000/my_app:latest
+# Run it as blue deployment  
+sudo docker run -p 8081:8080 -d --name green_app my_app
+```
+Make sure both post-receive files have executable access with: <code>chmod 777 post-recieve</code>
+
+- After initializing the repos, we have to setup the remote to those repos from the App folder
+```
+cd ../App/
+git remote add blue ../blue.git
+git remote add green ../green.git
+```
+Then set navigate to .git/hooks/pre-commit inside the App/ folder and paste this code and give it executable access
+```
+#!/bin/sh
+
+# Build container for current app
+sudo docker build -t my_app .
+# Remove the old registry
+sudo docker rmi localhost:5000/my_app:latest
+# Tag the newest build container as the lastest code
+sudo docker tag my_app localhost:5000/my_app:latest
+# Push the registry to be pulled by a specific remote
+sudo docker push localhost:5000/my_app:latest
+```
+- Now you can commit changes in the app folder and push to 
+<code>git push blue master</code>
+or
+<code>git push green master</code>
+
+and then run <code>sudo docker ps</code> to view your new running containers
+
+With the blue deployment being access on <code>curl localhost:8080</code>
+and the green deployment being access on <code>curl localhost:8081</code>
+
+![Docker Deploy](http://i.imgur.com/SzaePUG.gif)
