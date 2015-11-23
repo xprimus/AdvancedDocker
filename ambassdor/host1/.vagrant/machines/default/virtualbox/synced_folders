@@ -1,0 +1,1 @@
+{"virtualbox":{"/home/vagrant":{"guestpath":"/home/vagrant","hostpath":"/Users/xavierprimus/Documents/CSC/Devops/hw/AdvancedDocker/ambassdor/host1/code","disabled":false},"/vagrant":{"guestpath":"/vagrant","hostpath":"/Users/xavierprimus/Documents/CSC/Devops/hw/AdvancedDocker/ambassdor/host1","disabled":false}}}

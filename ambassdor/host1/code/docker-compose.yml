@@ -1,0 +1,10 @@
+#ambassador from svendowideit docker hub container linked
+ambassador:
+  container_name: redis_ambassador
+  image: svendowideit/ambassador
+  links: 
+    - redis:redis  
+  ports: 
+    - 6379:6379
+redis: 
+  image: redis
